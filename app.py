@@ -4,7 +4,9 @@ import shutil
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+import base64
+
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
@@ -22,6 +24,24 @@ DEFAULT_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 @app.get("/", response_class=HTMLResponse)
 def home():
     return Path(__file__).with_name("static").joinpath("index.html").read_text()
+
+
+@app.post("/api/analyze-product")
+async def analyze_product(photo: UploadFile = File(...), title: str = Form(""),
+                          brand: str = Form("KiddieKa")):
+    if not DEFAULT_KEY:
+        raise HTTPException(400, "No OpenRouter API key configured")
+    data = await photo.read()
+    if len(data) > 8 * 1024 * 1024:
+        raise HTTPException(413, "Photo too large — keep it under 8 MB")
+    mime = photo.content_type or "image/jpeg"
+    if not mime.startswith("image/"):
+        raise HTTPException(400, "Please upload an image file")
+    data_url = f"data:{mime};base64,{base64.b64encode(data).decode()}"
+    try:
+        return ai.analyze_product(data_url, title.strip(), brand.strip() or "KiddieKa", DEFAULT_KEY)
+    except Exception as e:
+        raise HTTPException(502, f"AI analysis failed: {e}")
 
 
 @app.post("/api/upload")
@@ -73,6 +93,7 @@ class FillReq(BaseModel):
     hsn: str = "6111"
     fill_parent: bool = True
     api_key: str = ""
+    seo: dict | None = None
 
 
 @app.post("/api/fill")
@@ -108,7 +129,7 @@ def fill(req: FillReq):
         ai_vals = {}
         if ai_fields:
             try:
-                ai_vals = ai.generate_group_fields(rows, ai_fields, info["allowed"], req.brand, key)
+                ai_vals = ai.generate_group_fields(rows, ai_fields, info["allowed"], req.brand, key, seo=req.seo)
             except Exception as e:
                 ai_errors.append(f"{gid}: {e}")
 

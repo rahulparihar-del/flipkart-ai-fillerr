@@ -218,6 +218,45 @@
   .rep { margin-top: 10px; font-size: 13px; line-height: 1.7; color: #37476B; }
   .rep b { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
 
+  /* product analyzer */
+  .pa-grid { display: grid; grid-template-columns: 170px 1fr; gap: 18px; margin-top: 20px; align-items: start; }
+  .pa-drop {
+    border: 2px dashed #C4D3EE; border-radius: 14px; background: #FAFCFF;
+    aspect-ratio: 1; display: grid; place-items: center; cursor: pointer;
+    overflow: hidden; transition: .2s; color: var(--blue); text-align: center;
+  }
+  .pa-drop:hover, .pa-drop.over { border-color: var(--blue); background: #EFF5FF; }
+  .pa-drop img { width: 100%; height: 100%; object-fit: cover; }
+  .pa-drop svg { width: 30px; height: 30px; }
+  .pa-drop p { font-size: 12px; color: #4A5C82; font-weight: 500; margin-top: 6px; }
+  .pa-side { display: flex; flex-direction: column; gap: 12px; }
+  .btn.sm { margin-top: 4px; padding: 12px; font-size: 14.5px; }
+
+  .seo-out { display: none; margin-top: 22px; border-top: 1px solid var(--line); padding-top: 20px; }
+  .seo-out.show { display: block; }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .fact {
+    font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 20px;
+    background: #F0F4FB; color: #37476B; border: 1px solid var(--line);
+  }
+  .seo-block { margin-top: 18px; }
+  .seo-block h3 { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--mut); margin-bottom: 8px; }
+  .seo-title-box {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px;
+    background: #EDF3FF; border: 1px solid #CBDCFA; color: var(--blue-deep);
+    padding: 13px 16px; border-radius: 10px; line-height: 1.45;
+  }
+  .kw { display: inline-block; font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 20px; margin: 0 6px 8px 0; }
+  .kw.easy { background: #E9F9F1; color: #0E7A4C; }
+  .kw.high { background: #EDF3FF; color: var(--blue-deep); }
+  .tip { font-size: 13.5px; color: #37476B; line-height: 1.7; padding-left: 18px; position: relative; }
+  .tip::before { content: '→'; position: absolute; left: 0; color: var(--sun); font-weight: 700; }
+  .seo-note {
+    margin-top: 18px; padding: 12px 15px; border-radius: 10px; font-size: 13px;
+    background: #FFF7DE; color: #8A6D00; font-weight: 500; display: flex; gap: 9px; align-items: center;
+  }
+  .seo-note svg { width: 16px; height: 16px; flex-shrink: 0; }
+
   footer { text-align: center; padding: 30px; font-size: 12.5px; color: var(--mut); }
 
   @media (max-width: 620px) {
@@ -249,6 +288,67 @@
 </header>
 
 <main class="wrap">
+
+  <div class="step" id="st0">
+    <div class="rail"><div class="rail-n"><i data-lucide="camera" style="width:17px;height:17px"></i></div><div class="rail-line"><i></i></div></div>
+    <section class="card" data-card>
+      <h2>Analyze your product <span style="font-size:12px;font-weight:500;color:var(--mut)">(optional, recommended)</span></h2>
+      <p class="hint">Drop a product photo and a rough title. AI reads the photo, then builds an SEO pack — keywords, title and description tuned for marketplace search. It is used automatically when your sheet is filled.</p>
+
+      <div class="pa-grid">
+        <div class="pa-drop" id="padrop">
+          <input type="file" id="pafile" accept="image/*" style="display:none">
+          <div id="paidle">
+            <i data-lucide="image-plus"></i>
+            <p>Product photo</p>
+          </div>
+        </div>
+        <div class="pa-side">
+          <div>
+            <label>Product title (rough is fine)</label>
+            <input type="text" id="patitle" placeholder="e.g. Avocado print muslin co-ord set 12-18M">
+          </div>
+          <button class="btn sm" id="paBtn"><i data-lucide="scan-search"></i> Analyze &amp; build SEO pack</button>
+          <div class="prog" id="paprog">
+            <div class="prog-bar"><i></i></div>
+            <p id="paprogtext">Reading your photo…</p>
+          </div>
+          <div class="err" id="pae"></div>
+        </div>
+      </div>
+
+      <div class="seo-out" id="seoout">
+        <div class="seo-block">
+          <h3>What the AI sees</h3>
+          <div class="facts" id="facts"></div>
+        </div>
+        <div class="seo-block">
+          <h3>SEO title</h3>
+          <div class="seo-title-box" id="seotitle"></div>
+        </div>
+        <div class="seo-block">
+          <h3>Easy-to-rank keywords (start here)</h3>
+          <div id="kweasy"></div>
+        </div>
+        <div class="seo-block">
+          <h3>High-volume keywords</h3>
+          <div id="kwhigh"></div>
+        </div>
+        <div class="seo-block">
+          <h3>Ranking tips for this listing</h3>
+          <div id="tips"></div>
+        </div>
+        <details style="margin-top:16px">
+          <summary>SEO description preview</summary>
+          <div class="rep" id="seodesc" style="white-space:pre-wrap"></div>
+        </details>
+        <div class="seo-note">
+          <i data-lucide="badge-check"></i>
+          <span>Saved. When you fill your sheet below, these keywords and this description guide the AI automatically.</span>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <div class="step active" id="st1">
     <div class="rail"><div class="rail-n">1</div><div class="rail-line"><i></i></div></div>
@@ -386,6 +486,75 @@ function setPipe(stage) {  // 1 uploading done, 2 ai, 3 done
   });
 }
 
+/* ── product analyzer (step 0) ── */
+let seoCtx = null, paFile = null, paTimer = null;
+const PA_MSGS = [
+  'Reading your photo with the vision model…',
+  'Identifying product type, colors and print…',
+  'Building SEO keywords the way shoppers search…',
+  'Writing the rank-optimised description…',
+];
+
+$('padrop').addEventListener('click', () => $('pafile').click());
+['dragover','dragenter'].forEach(ev => $('padrop').addEventListener(ev, e => { e.preventDefault(); $('padrop').classList.add('over'); }));
+$('padrop').addEventListener('dragleave', () => $('padrop').classList.remove('over'));
+$('padrop').addEventListener('drop', e => { e.preventDefault(); $('padrop').classList.remove('over'); if (e.dataTransfer.files[0]) setPhoto(e.dataTransfer.files[0]); });
+$('pafile').addEventListener('change', () => { if ($('pafile').files[0]) setPhoto($('pafile').files[0]); });
+
+function setPhoto(f) {
+  if (!f.type.startsWith('image/')) return;
+  paFile = f;
+  const url = URL.createObjectURL(f);
+  $('padrop').innerHTML = `<img src="${url}" alt="product">`;
+}
+
+$('paBtn').addEventListener('click', async () => {
+  $('pae').classList.remove('show');
+  if (!paFile) { $('pae').textContent = 'Add a product photo first.'; $('pae').classList.add('show'); return; }
+  $('paBtn').disabled = true;
+  $('paprog').classList.add('show');
+  let pi = 0;
+  $('paprogtext').textContent = PA_MSGS[0];
+  paTimer = setInterval(() => { pi = (pi + 1) % PA_MSGS.length; $('paprogtext').textContent = PA_MSGS[pi]; }, 5000);
+
+  const fd = new FormData();
+  fd.append('photo', paFile);
+  fd.append('title', $('patitle').value);
+  fd.append('brand', $('brand') ? $('brand').value : 'KiddieKa');
+
+  try {
+    const r = await fetch('/api/analyze-product', { method: 'POST', body: fd });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || 'Analysis failed');
+    seoCtx = j;
+    const p = j.product || {}, s = j.seo || {};
+
+    const factbits = [
+      p.product_type, p.print_theme, p.primary_color && `Color: ${p.primary_color}`,
+      p.sleeve, p.closure, p.fabric_look, p.gender, p.age_group,
+      ...(Array.isArray(p.items) ? [`Items: ${p.items.join(' + ')}`] : []),
+    ].filter(Boolean);
+    $('facts').innerHTML = factbits.map(f => `<span class="fact">${f}</span>`).join('');
+    $('seotitle').textContent = s.seo_title || '—';
+    $('kweasy').innerHTML = (s.keywords_easy || []).map(k => `<span class="kw easy">${k}</span>`).join('');
+    $('kwhigh').innerHTML = (s.keywords_high || []).map(k => `<span class="kw high">${k}</span>`).join('');
+    $('tips').innerHTML = (s.ranking_tips || []).map(t => `<p class="tip">${t}</p>`).join('');
+    $('seodesc').textContent = s.description || '';
+    $('seoout').classList.add('show');
+    $('st0').classList.add('done');
+    if (window.lucide) lucide.createIcons();
+    if (!reduced && window.gsap) {
+      gsap.from('#seoout .fact, #seoout .kw', { y: 10, opacity: 0, duration: .35, stagger: .03, ease: 'power2.out' });
+    }
+  } catch (e) {
+    $('pae').textContent = e.message; $('pae').classList.add('show');
+  } finally {
+    clearInterval(paTimer);
+    $('paprog').classList.remove('show');
+    $('paBtn').disabled = false;
+  }
+});
+
 /* ── upload ── */
 $('drop').addEventListener('click', () => $('file').click());
 ['dragover','dragenter'].forEach(ev => $('drop').addEventListener(ev, e => {
@@ -477,6 +646,7 @@ $('fillBtn').addEventListener('click', async () => {
         mrp: +$('mrp').value, price: +$('price').value, stock: +$('stock').value,
         brand: $('brand').value, manufacturer: $('manu').value, hsn: $('hsn').value,
         fill_parent: $('parent').checked,
+        seo: seoCtx,
       }),
     });
     const j = await r.json();

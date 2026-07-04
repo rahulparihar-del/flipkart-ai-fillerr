@@ -7,6 +7,7 @@ import requests
 
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = os.environ.get("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
+VISION_MODEL = os.environ.get("OPENROUTER_VISION_MODEL", "nvidia/nemotron-nano-12b-v2-vl:free")
 
 SYSTEM = (
     "You are a JSON generator for Flipkart product listings for Indian baby and kids "
@@ -59,8 +60,89 @@ def _clean(raw: str) -> dict:
     return json.loads(raw[s : e + 1])
 
 
+def _chat(payload: dict, api_key: str) -> str:
+    resp = requests.post(
+        API_URL,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+            "HTTP-Referer": "https://seller.flipkart.com",
+            "X-Title": "Flipkart AI Filler",
+        },
+        json=payload,
+        timeout=150,
+    )
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"]
+
+
+def analyze_product(image_data_url: str, title: str, brand: str, api_key: str) -> dict:
+    """Stage 1: vision model reads the photo. Stage 2: text model builds SEO pack."""
+    # ── Stage 1: what is in the photo? ──────────────────────────────────────
+    vision_prompt = (
+        f'This is a product photo from Indian kids clothing brand "{brand}". '
+        f'Seller title: "{title or "not given"}".\n'
+        "Look carefully at the photo and describe the product. Output ONLY this JSON:\n"
+        '{"product_type": "e.g. Co-ord Set / Frock / Romper / T-shirt Set",\n'
+        ' "items": ["e.g. Vest", "Shorts"],\n'
+        ' "primary_color": "...", "secondary_color": "...",\n'
+        ' "print_theme": "e.g. Avocado cartoon print / Dinosaur print / Floral",\n'
+        ' "sleeve": "Sleeveless / Half Sleeve / Full Sleeve",\n'
+        ' "closure": "e.g. Front snap buttons / Pullover / Elastic waist",\n'
+        ' "fabric_look": "e.g. Muslin cotton / Cotton jersey",\n'
+        ' "gender": "Boys / Girls / Unisex",\n'
+        ' "age_group": "e.g. 0-2 years / 1-3 years",\n'
+        ' "notable_details": ["short phrases of anything special you can see"]}\n'
+        "No markdown, no explanation — JSON only."
+    )
+    raw = _chat({
+        "model": VISION_MODEL,
+        "messages": [{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": vision_prompt},
+                {"type": "image_url", "image_url": {"url": image_data_url}},
+            ],
+        }],
+        "temperature": 0.15,
+        "max_tokens": 900,
+    }, api_key)
+    product = _clean(raw)
+
+    # ── Stage 2: SEO pack from the facts ────────────────────────────────────
+    seo_prompt = (
+        f'Indian kids clothing brand "{brand}" is listing this product on Flipkart:\n'
+        f"Seller title: {title or 'not given'}\n"
+        f"Product facts from photo analysis: {json.dumps(product, ensure_ascii=False)}\n\n"
+        "Create a marketplace SEO pack the way Indian shoppers search on Flipkart, Amazon, Meesho and Myntra. "
+        "Output ONLY this JSON:\n"
+        '{"seo_title": "Flipkart style listing title, max 100 chars, brand first, packed with the strongest search terms",\n'
+        ' "keywords_easy": ["8-10 long-tail keywords with lower competition where a new seller can rank first"],\n'
+        ' "keywords_high": ["8-10 high-volume competitive keywords"],\n'
+        ' "description": "550-800 word rank-optimised product description that naturally uses the keywords, with sections for fabric, design, comfort, sizing and care. End with: Brand: '
+        + brand + '. Made in India.",\n'
+        ' "key_features": ["5 keyword-rich key features, each 10-15 words"],\n'
+        ' "ranking_tips": ["3 short practical tips for this specific listing to rank better"]}\n'
+        "No markdown — JSON only."
+    )
+    seo_raw = _chat({
+        "model": MODEL,
+        "messages": [
+            {"role": "system", "content": SYSTEM},
+            {"role": "user", "content": seo_prompt},
+        ],
+        "temperature": 0.3,
+        "max_tokens": 3000,
+        "response_format": {"type": "json_object"},
+    }, api_key)
+    seo = _clean(seo_raw)
+
+    return {"product": product, "seo": seo,
+            "models": {"vision": VISION_MODEL, "text": MODEL}}
+
+
 def generate_group_fields(group_rows: list, fields: list, allowed: dict,
-                          brand: str, api_key: str) -> dict:
+                          brand: str, api_key: str, seo: dict | None = None) -> dict:
     """One AI call per product group. Returns {field: value}."""
     sample = group_rows[0]["existing"]
     ctx_lines = [f"SKU: {group_rows[0]['base']}"]
@@ -69,6 +151,21 @@ def generate_group_fields(group_rows: list, fields: list, allowed: dict,
                 "Pattern/Print Type", "Sleeve Length", "Net Quantity", "Occasion"):
         if key in sample:
             ctx_lines.append(f"{key}: {sample[key]}")
+
+    if seo:
+        s = seo.get("seo", seo)
+        p = seo.get("product", {})
+        if p:
+            ctx_lines.append("Photo analysis: " + json.dumps(p, ensure_ascii=False)[:500])
+        kws = (s.get("keywords_easy", []) + s.get("keywords_high", []))[:20]
+        if kws:
+            ctx_lines.append("Researched SEO keywords (use these in Search Keywords and weave into Description): "
+                             + ", ".join(str(k) for k in kws))
+        if s.get("seo_title"):
+            ctx_lines.append(f"SEO title direction: {s['seo_title']}")
+        if s.get("description"):
+            ctx_lines.append("Description guidance (rewrite naturally, keep keywords): "
+                             + str(s["description"])[:700])
 
     spec_lines = []
     for f in fields:
