@@ -4,8 +4,11 @@ import shutil
 import uuid
 from pathlib import Path
 
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI, File, HTTPException, UploadFile
+# pyrefly: ignore [missing-import]
 from fastapi.responses import FileResponse, HTMLResponse
+# pyrefly: ignore [missing-import]
 from pydantic import BaseModel
 
 from filler import ai, analyze, apply
@@ -90,6 +93,8 @@ def fill(req: FillReq):
     sheet = info["sheet"]
     instructions, effective = [], {}
     ai_errors = []
+    ai_cells, fixed_cells = 0, 0
+    ai_report: dict = {}
 
     ui_numbers = {
         "MRP (INR)": req.mrp,
@@ -140,7 +145,11 @@ def fill(req: FillReq):
                 elif field in ai_vals and ai_vals[field]:
                     v = ai_vals[field]
                     val = "::".join(str(x) for x in v) if isinstance(v, list) else str(v)
+                    ai_cells += 1
+                    ai_report.setdefault(gid, set()).add(field)
                 if val is not None and str(val).strip():
+                    if field not in ai_vals or field in ui_numbers or field in ai.FIXED_FIELDS:
+                        fixed_cells += 1
                     instructions.append((sheet, r["row"], col, kind, val))
                     eff[field] = str(val)
             effective[r["sku"]] = eff
@@ -171,6 +180,10 @@ def fill(req: FillReq):
     return {
         "ok": True,
         "cells_filled": len(instructions),
+        "ai_cells": ai_cells,
+        "fixed_cells": fixed_cells,
+        "ai_report": {g: sorted(f) for g, f in ai_report.items()},
+        "model": ai.MODEL,
         "parent_rows": parent_rows_added,
         "ai_errors": ai_errors,
         "download": f"/api/download/{req.job_id}",
