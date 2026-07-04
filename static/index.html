@@ -58,8 +58,10 @@
   .pipe-dot {
     width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center;
     background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
-    font-size: 22px; transition: .3s;
+    color: #AFC2E8; transition: .3s;
   }
+  .pipe-dot svg { width: 22px; height: 22px; }
+  .pipe-node.on .pipe-dot, .pipe-node.done .pipe-dot { color: #fff; }
   .pipe-node.on .pipe-dot { background: var(--blue); border-color: var(--blue); box-shadow: 0 8px 28px rgba(40,116,240,.45); }
   .pipe-node.done .pipe-dot { background: var(--mint); border-color: var(--mint); }
   .pipe-node span { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; color: #8FA3CB; text-transform: uppercase; }
@@ -102,7 +104,8 @@
   }
   .drop:hover, .drop.over { border-color: var(--blue); background: #EFF5FF; }
   .drop input { display: none; }
-  .drop .dino { font-size: 34px; display: inline-block; }
+  .drop .dino { display: inline-block; color: var(--blue); }
+  .drop .dino svg { width: 38px; height: 38px; }
   .drop p { margin-top: 10px; font-size: 14.5px; color: #4A5C82; font-weight: 500; }
   .drop small { display: block; margin-top: 5px; font-size: 12px; color: var(--mut); }
   .drop.busy { pointer-events: none; border-style: solid; border-color: var(--blue); background: #F3F8FF; }
@@ -116,12 +119,7 @@
     border: 4px solid #D9E6FC; border-top-color: var(--blue);
     animation: spin 0.9s linear infinite; position: relative;
   }
-  .ring::after {   /* little dino riding the ring */
-    content: '🦕'; position: absolute; inset: 0; display: grid; place-items: center;
-    font-size: 22px; animation: unspin 0.9s linear infinite;
-  }
   @keyframes spin  { to { transform: rotate(360deg); } }
-  @keyframes unspin{ to { transform: rotate(-360deg); } }
   .loader p { margin-top: 14px; font-size: 14px; font-weight: 600; color: var(--blue-deep); }
   .loader small { display: block; margin-top: 5px; font-size: 12px; color: var(--mut); }
   .ldots::after { content: ''; animation: dots 1.4s steps(4, end) infinite; }
@@ -197,6 +195,21 @@
   .chip.ai { background: #EDF3FF; color: var(--blue-deep); }
   .chip.fx { background: #FFF7DE; color: #8A6D00; }
   .chip.pr { background: #E9F9F1; color: #0E7A4C; }
+  .chip svg { width: 15px; height: 15px; }
+  .btn svg { width: 17px; height: 17px; vertical-align: -3px; margin-right: 6px; }
+
+  /* AI usage meter */
+  .usage { margin-top: 22px; }
+  .usage-head { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--mut); margin-bottom: 8px; }
+  .usage-head span:last-child { color: var(--blue-deep); font-family: 'JetBrains Mono', monospace; text-transform: none; letter-spacing: 0; }
+  .usebar { display: flex; height: 12px; border-radius: 7px; overflow: hidden; background: #E6EDF9; }
+  .usebar i { display: block; height: 100%; width: 0; transition: width 1.2s cubic-bezier(.2,.7,.2,1); }
+  .seg-ai { background: linear-gradient(90deg, var(--blue), #5C9DFF); }
+  .seg-fx { background: var(--sun); }
+  .uselegend { display: flex; gap: 18px; margin-top: 8px; font-size: 12.5px; color: var(--mut); }
+  .uselegend b { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .dot-ai { background: var(--blue); }
+  .dot-fx { background: var(--sun); }
   .model {
     margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--mut);
   }
@@ -226,11 +239,11 @@
     <p class="sub" data-an>Upload the Flipkart bulk template, review your products, and download the same file back — every empty field completed. Nothing in the sheet's structure is touched.</p>
 
     <div class="pipe" data-an>
-      <div class="pipe-node" id="pn1"><div class="pipe-dot">📄</div><span>Upload</span></div>
+      <div class="pipe-node" id="pn1"><div class="pipe-dot"><i data-lucide="file-spreadsheet"></i></div><span>Upload</span></div>
       <div class="pipe-link"><i></i><i></i><i></i></div>
-      <div class="pipe-node" id="pn2"><div class="pipe-dot">✨</div><span>AI fill</span></div>
+      <div class="pipe-node" id="pn2"><div class="pipe-dot"><i data-lucide="sparkles"></i></div><span>AI fill</span></div>
       <div class="pipe-link"><i></i><i></i><i></i></div>
-      <div class="pipe-node" id="pn3"><div class="pipe-dot">⬇️</div><span>Download</span></div>
+      <div class="pipe-node" id="pn3"><div class="pipe-dot"><i data-lucide="download"></i></div><span>Download</span></div>
     </div>
   </div>
 </header>
@@ -245,7 +258,7 @@
       <div class="drop" id="drop">
         <input type="file" id="file" accept=".xls,.xlsx,.xlsm">
         <div class="idle">
-          <span class="dino" id="dino">🦕</span>
+          <span class="dino" id="dino"><i data-lucide="file-up"></i></span>
           <p>Click or drop the sheet here</p>
           <small>.xls · .xlsx — up to 20 MB</small>
         </div>
@@ -288,7 +301,7 @@
         <span>Also fill <b>Parent Variant Products</b> (main size per product)</span>
       </div>
 
-      <button class="btn" id="fillBtn">Fill the sheet with AI</button>
+      <button class="btn" id="fillBtn"><i data-lucide="sparkles"></i> Fill the sheet with AI</button>
 
       <div class="prog" id="prog">
         <div class="prog-bar"><i></i></div>
@@ -298,17 +311,33 @@
 
       <div class="result" id="result">
         <div class="big"><span id="count">0</span><small>cells filled</small></div>
+
+        <div class="usage">
+          <div class="usage-head">
+            <span>AI usage</span>
+            <span id="usepct"></span>
+          </div>
+          <div class="usebar">
+            <i class="seg-ai" id="segai"></i><i class="seg-fx" id="segfx"></i>
+          </div>
+          <div class="uselegend">
+            <span><b class="dot-ai"></b> AI generated</span>
+            <span><b class="dot-fx"></b> Rules (no AI)</span>
+          </div>
+        </div>
+
         <div class="split">
-          <div class="chip ai">🤖 AI wrote <span id="aic" style="margin-left:4px"></span> cells</div>
-          <div class="chip fx">⚡ <span id="fxc"></span> filled instantly by rules</div>
-          <div class="chip pr" id="prchip" style="display:none">👨‍👩‍👧 <span id="prc"></span> parent rows</div>
+          <div class="chip ai"><i data-lucide="bot"></i> AI wrote <span id="aic"></span> cells</div>
+          <div class="chip fx"><i data-lucide="zap"></i> <span id="fxc"></span> by rules, instantly</div>
+          <div class="chip ai"><i data-lucide="message-square"></i> <span id="calls"></span> AI calls</div>
+          <div class="chip pr" id="prchip" style="display:none"><i data-lucide="layers"></i> <span id="prc"></span> parent rows</div>
         </div>
         <p class="model" id="model"></p>
         <details id="repwrap">
           <summary>What exactly did the AI write?</summary>
           <div class="rep" id="rep"></div>
         </details>
-        <button class="btn dl" id="dlBtn">Download filled sheet</button>
+        <button class="btn dl" id="dlBtn"><i data-lucide="download"></i> Download filled sheet</button>
       </div>
     </section>
   </div>
@@ -318,10 +347,13 @@
 <footer>Built for Kiddieka · The sheet is edited in place — structure, images and validations untouched.</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let jobId = null, dlUrl = null, pipeTl = null;
+
+if (window.lucide) lucide.createIcons();
 
 /* ── entrance animation ── */
 if (!reduced && window.gsap) {
@@ -453,11 +485,21 @@ $('fillBtn').addEventListener('click', async () => {
     dlUrl = j.download;
     $('aic').textContent = j.ai_cells;
     $('fxc').textContent = j.fixed_cells;
+    $('calls').textContent = Object.keys(j.ai_report || {}).length;
     if (j.parent_rows) { $('prc').textContent = j.parent_rows; $('prchip').style.display = ''; }
-    $('model').textContent = 'model: ' + (j.model || 'openrouter') + ' · one AI call per product';
+    $('model').textContent = 'model: ' + (j.model || 'openrouter') + ' · one AI call per product · free tier';
     $('rep').innerHTML = Object.entries(j.ai_report || {}).map(([g, fields]) =>
       `<div><b>${g}</b> → ${fields.join(', ')}</div>`).join('') || 'No AI fields were needed — everything was rule-based.';
     $('result').classList.add('show');
+
+    /* AI usage meter */
+    const tot = Math.max(1, j.ai_cells + j.fixed_cells);
+    const aipct = Math.round(j.ai_cells / tot * 100);
+    $('usepct').textContent = aipct + '% AI · ' + (100 - aipct) + '% rules';
+    requestAnimationFrame(() => {
+      $('segai').style.width = aipct + '%';
+      $('segfx').style.width = (100 - aipct) + '%';
+    });
 
     /* count-up */
     if (!reduced && window.gsap) {
