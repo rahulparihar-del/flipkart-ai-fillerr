@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🦕 Kiddieka — Flipkart AI Filler</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Segoe UI', Arial, sans-serif; background: #f1f4f9; color: #1a1a2e; min-height: 100vh; }
+
+  .header { background: linear-gradient(135deg, #2874f0, #0040c1); color: #fff; padding: 26px 20px; text-align: center; }
+  .header h1 { font-size: 22px; }
+  .header p { opacity: .85; font-size: 13px; margin-top: 4px; }
+
+  .wrap { max-width: 760px; margin: 24px auto 60px; padding: 0 16px; }
+  .card { background: #fff; border-radius: 14px; padding: 22px; margin-bottom: 18px; box-shadow: 0 2px 14px rgba(20,40,120,.07); }
+  .card h2 { font-size: 15px; margin-bottom: 14px; color: #0d2c76; }
+
+  .drop { border: 2.5px dashed #b9cdf5; border-radius: 12px; padding: 42px 20px; text-align: center; cursor: pointer; transition: .2s; color: #4a6db5; font-size: 14px; }
+  .drop:hover, .drop.over { background: #eef4ff; border-color: #2874f0; }
+  .drop input { display: none; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 12px; }
+  label { display: block; font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+  input[type=text], input[type=number], input[type=password] { width: 100%; padding: 9px 11px; border: 1.5px solid #dde4f0; border-radius: 8px; font-size: 14px; outline: none; }
+  input:focus { border-color: #2874f0; }
+
+  .prod { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #f0f3fa; font-size: 13.5px; }
+  .prod:last-child { border-bottom: none; }
+  .prod .badge { background: #e8f0ff; color: #2265d8; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+  .prod .name { font-weight: 700; }
+  .prod .meta { color: #7a869c; font-size: 12px; }
+
+  .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, #2874f0, #0040c1); color: #fff; box-shadow: 0 4px 14px rgba(40,116,240,.3); transition: .15s; }
+  .btn:hover:not(:disabled) { transform: translateY(-1px); }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+  .btn.green { background: linear-gradient(135deg, #14a44d, #0b7a36); box-shadow: 0 4px 14px rgba(20,164,77,.3); }
+
+  .status { margin: 14px 0 4px; padding: 12px 14px; border-radius: 9px; font-size: 13px; display: none; line-height: 1.55; }
+  .status.show { display: block; }
+  .status.load { background: #e5efff; color: #1549a8; }
+  .status.ok { background: #e4f7ec; color: #14713d; font-weight: 600; }
+  .status.err { background: #fdeaea; color: #b02a2a; }
+
+  .check { display: flex; align-items: center; gap: 9px; font-size: 13.5px; margin: 12px 0; color: #333; }
+  .check input { width: 17px; height: 17px; accent-color: #2874f0; }
+
+  .hidden { display: none; }
+  .spin { display: inline-block; width: 14px; height: 14px; border: 2.5px solid #9ec1ff; border-top-color: #1549a8; border-radius: 50%; animation: sp 1s linear infinite; vertical-align: -2px; margin-right: 7px; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🦕 Flipkart AI Filler</h1>
+  <p>Upload your Flipkart bulk sheet — AI fills every empty field — download &amp; upload to Seller Hub</p>
+</div>
+
+<div class="wrap">
+
+  <div class="card" id="step1">
+    <h2>1 — Upload Flipkart template (.xls)</h2>
+    <div class="drop" id="drop">
+      <input type="file" id="file" accept=".xls,.xlsx,.xlsm">
+      📄 Click or drop your Flipkart bulk listing sheet here
+    </div>
+    <div class="status" id="s1"></div>
+  </div>
+
+  <div class="card hidden" id="step2">
+    <h2>2 — Products found in your sheet</h2>
+    <div id="plist"></div>
+  </div>
+
+  <div class="card hidden" id="step3">
+    <h2>3 — Your details</h2>
+    <div class="grid">
+      <div><label>MRP (₹)</label><input type="number" id="mrp" value="599"></div>
+      <div><label>Selling Price (₹)</label><input type="number" id="price" value="299"></div>
+      <div><label>Stock</label><input type="number" id="stock" value="100"></div>
+      <div><label>HSN</label><input type="text" id="hsn" value="6111"></div>
+    </div>
+    <div class="grid">
+      <div><label>Brand</label><input type="text" id="brand" value="KiddieKa"></div>
+      <div><label>Manufacturer / Packer</label><input type="text" id="manu" value="KiddieKa, India"></div>
+    </div>
+    <div class="check">
+      <input type="checkbox" id="parent" checked>
+      <span>Also fill <b>Parent Variant Products</b> sheet (main size per product)</span>
+    </div>
+    <div class="status" id="s3"></div>
+    <button class="btn" id="fillBtn">🤖 Fill with AI</button>
+    <button class="btn green hidden" id="dlBtn" style="margin-top:10px">⬇️ Download filled sheet</button>
+  </div>
+
+</div>
+
+<script>
+let jobId = null, dlUrl = null;
+
+const $ = id => document.getElementById(id);
+const status = (el, msg, cls) => { const s = $(el); s.className = 'status show ' + cls; s.innerHTML = msg; };
+
+$('drop').addEventListener('click', () => $('file').click());
+$('drop').addEventListener('dragover', e => { e.preventDefault(); $('drop').classList.add('over'); });
+$('drop').addEventListener('dragleave', () => $('drop').classList.remove('over'));
+$('drop').addEventListener('drop', e => { e.preventDefault(); $('drop').classList.remove('over'); if (e.dataTransfer.files[0]) upload(e.dataTransfer.files[0]); });
+$('file').addEventListener('change', () => { if ($('file').files[0]) upload($('file').files[0]); });
+
+async function upload(file) {
+  status('s1', '<span class="spin"></span>Analyzing your sheet…', 'load');
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/api/upload', { method: 'POST', body: fd });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || 'Upload failed');
+    jobId = j.job_id;
+    status('s1', `✅ <b>${j.sheet}</b> — ${j.total_rows} listings, ${j.products.length} products detected`, 'ok');
+    $('plist').innerHTML = j.products.map(p => `
+      <div class="prod">
+        <span class="badge">${p.skus.length} sizes</span>
+        <div>
+          <div class="name">${p.group}</div>
+          <div class="meta">${[p.type, p.ideal_for, p.color].filter(Boolean).join(' · ')} — sizes: ${p.sizes.join(', ')} — ${p.missing_count} empty fields</div>
+        </div>
+      </div>`).join('');
+    $('step2').classList.remove('hidden');
+    $('step3').classList.remove('hidden');
+    if (!j.has_parent_sheet) $('parent').checked = false;
+  } catch (e) {
+    status('s1', '❌ ' + e.message, 'err');
+  }
+}
+
+$('fillBtn').addEventListener('click', async () => {
+  if (!jobId) return;
+  $('fillBtn').disabled = true;
+  $('dlBtn').classList.add('hidden');
+  status('s3', '<span class="spin"></span>AI is generating and filling all fields… this takes 1–3 minutes', 'load');
+  try {
+    const r = await fetch('/api/fill', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        job_id: jobId,
+        mrp: +$('mrp').value, price: +$('price').value, stock: +$('stock').value,
+        brand: $('brand').value, manufacturer: $('manu').value, hsn: $('hsn').value,
+        fill_parent: $('parent').checked,
+      }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || 'Fill failed');
+    let msg = `🎉 Done! <b>${j.cells_filled}</b> cells filled` +
+              (j.parent_rows ? `, ${j.parent_rows} parent rows added` : '') + '.';
+    if (j.ai_errors.length) msg += `<br>⚠️ AI issues: ${j.ai_errors.join('; ')}`;
+    status('s3', msg, j.ai_errors.length ? 'err' : 'ok');
+    dlUrl = j.download;
+    $('dlBtn').classList.remove('hidden');
+  } catch (e) {
+    status('s3', '❌ ' + e.message, 'err');
+  } finally {
+    $('fillBtn').disabled = false;
+  }
+});
+
+$('dlBtn').addEventListener('click', () => { if (dlUrl) window.location = dlUrl; });
+</script>
+</body>
+</html>
