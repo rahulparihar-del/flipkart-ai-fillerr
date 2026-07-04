@@ -1,798 +1,399 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Flipkart AI Filler — Kiddieka</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap"
-    rel="stylesheet">
-  <style>
-    :root {
-      color-scheme: light;
-      --ink: #0A1E44;
-      --bg: #F4F7FC;
-      --card: #FFFFFF;
-      --blue: #2874F0;
-      --blue-deep: #0B4CC4;
-      --sun: #FFC200;
-      --mint: #1FB673;
-      --red: #D64545;
-      --line: #DFE7F3;
-      --mut: #64748F;
-      --radius: 18px;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--ink);
-      min-height: 100vh;
-    }
-
-    /* ───────── HERO ───────── */
-    .hero {
-      background: var(--ink);
-      color: #fff;
-      padding: 64px 24px 96px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero::after {
-      /* soft glow */
-      content: '';
-      position: absolute;
-      width: 640px;
-      height: 640px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(40, 116, 240, .35), transparent 65%);
-      top: -320px;
-      right: -160px;
-      pointer-events: none;
-    }
-
-    .hero-in {
-      max-width: 880px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }
-
-    .eyebrow {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      letter-spacing: .22em;
-      color: var(--sun);
-      text-transform: uppercase;
-      margin-bottom: 18px;
-    }
-
-    h1 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      font-size: clamp(34px, 5.4vw, 56px);
-      line-height: 1.06;
-      letter-spacing: -.02em;
-      max-width: 640px;
-    }
-
-    h1 em {
-      font-style: normal;
-      color: var(--sun);
-    }
-
-    .sub {
-      margin-top: 18px;
-      font-size: 16px;
-      color: #B9C6E2;
-      max-width: 520px;
-      line-height: 1.65;
-    }
-
-    /* pipeline — the signature */
-    .pipe {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      margin-top: 44px;
-      max-width: 560px;
-    }
-
-    .pipe-node {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 9px;
-      min-width: 86px;
-    }
-
-    .pipe-dot {
-      width: 52px;
-      height: 52px;
-      border-radius: 16px;
-      display: grid;
-      place-items: center;
-      background: rgba(255, 255, 255, .07);
-      border: 1px solid rgba(255, 255, 255, .14);
-      font-size: 22px;
-      transition: .3s;
-    }
-
-    .pipe-node.on .pipe-dot {
-      background: var(--blue);
-      border-color: var(--blue);
-      box-shadow: 0 8px 28px rgba(40, 116, 240, .45);
-    }
-
-    .pipe-node.done .pipe-dot {
-      background: var(--mint);
-      border-color: var(--mint);
-    }
-
-    .pipe-node span {
-      font-size: 11.5px;
-      font-weight: 600;
-      letter-spacing: .06em;
-      color: #8FA3CB;
-      text-transform: uppercase;
-    }
-
-    .pipe-node.on span,
-    .pipe-node.done span {
-      color: #fff;
-    }
-
-    .pipe-link {
-      flex: 1;
-      height: 2px;
-      background: rgba(255, 255, 255, .13);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .pipe-link i {
-      position: absolute;
-      top: -2px;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--sun);
-      opacity: 0;
-      box-shadow: 0 0 10px var(--sun);
-    }
-
-    /* ───────── LAYOUT & RAIL ───────── */
-    .wrap {
-      max-width: 880px;
-      margin: -44px auto 90px;
-      padding: 0 24px;
-      position: relative;
-      z-index: 2;
-    }
-
-    .step {
-      display: grid;
-      grid-template-columns: 56px 1fr;
-      gap: 0 20px;
-    }
-
-    .rail {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .rail-n {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: var(--card);
-      border: 2px solid var(--line);
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      font-size: 15px;
-      color: var(--mut);
-      flex-shrink: 0;
-      transition: .35s;
-    }
-
-    .step.active .rail-n {
-      border-color: var(--blue);
-      color: var(--blue);
-    }
-
-    .step.done .rail-n {
-      background: var(--mint);
-      border-color: var(--mint);
-      color: #fff;
-    }
-
-    .rail-line {
-      width: 2px;
-      flex: 1;
-      background: var(--line);
-      margin: 6px 0;
-      position: relative;
-    }
-
-    .rail-line i {
-      position: absolute;
-      inset: 0 0 auto;
-      height: 0;
-      background: var(--mint);
-      width: 100%;
-      transition: height .8s ease;
-    }
-
-    .step.done .rail-line i {
-      height: 100%;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 28px;
-      margin-bottom: 26px;
-      box-shadow: 0 1px 2px rgba(10, 30, 68, .04), 0 12px 34px -18px rgba(10, 30, 68, .12);
-    }
-
-    .card h2 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 19px;
-      font-weight: 700;
-      letter-spacing: -.01em;
-    }
-
-    .card .hint {
-      font-size: 13.5px;
-      color: var(--mut);
-      margin-top: 5px;
-      line-height: 1.6;
-    }
-
-    /* dropzone */
-    .drop {
-      margin-top: 20px;
-      border: 2px dashed #C4D3EE;
-      border-radius: 14px;
-      padding: 46px 24px;
-      text-align: center;
-      cursor: pointer;
-      transition: .25s;
-      background: #FAFCFF;
-    }
-
-    .drop:hover,
-    .drop.over {
-      border-color: var(--blue);
-      background: #EFF5FF;
-    }
-
-    .drop input {
-      display: none;
-    }
-
-    .drop .dino {
-      font-size: 34px;
-      display: inline-block;
-    }
-
-    .drop p {
-      margin-top: 10px;
-      font-size: 14.5px;
-      color: #4A5C82;
-      font-weight: 500;
-    }
-
-    .drop small {
-      display: block;
-      margin-top: 5px;
-      font-size: 12px;
-      color: var(--mut);
-    }
-
-    /* products */
-    .prod {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 0;
-      border-bottom: 1px solid #EEF3FB;
-    }
-
-    .prod:last-child {
-      border-bottom: none;
-    }
-
-    .prod .sku {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      font-weight: 500;
-      background: var(--ink);
-      color: #fff;
-      padding: 5px 11px;
-      border-radius: 8px;
-      white-space: nowrap;
-    }
-
-    .prod .nm {
-      font-weight: 600;
-      font-size: 14.5px;
-    }
-
-    .prod .mt {
-      font-size: 12.5px;
-      color: var(--mut);
-      margin-top: 2px;
-    }
-
-    .prod .cnt {
-      margin-left: auto;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11.5px;
-      color: var(--blue);
-      white-space: nowrap;
-    }
-
-    /* form */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 14px;
-      margin-top: 20px;
-    }
-
-    label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--mut);
-      margin-bottom: 6px;
-    }
-
-    input[type=text],
-    input[type=number] {
-      width: 100%;
-      padding: 11px 13px;
-      border: 1.5px solid var(--line);
-      border-radius: 10px;
-      font-size: 14.5px;
-      font-family: 'Inter', sans-serif;
-      outline: none;
-      transition: .2s;
-      background: #fff;
-      color: var(--ink);
-    }
-
-    input:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(40, 116, 240, .12);
-    }
-
-    .check {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 14px;
-      margin-top: 18px;
-    }
-
-    .check input {
-      width: 17px;
-      height: 17px;
-      accent-color: var(--blue);
-    }
-
-    .btn {
-      width: 100%;
-      margin-top: 22px;
-      padding: 15px;
-      border: none;
-      border-radius: 12px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: .01em;
-      cursor: pointer;
-      background: var(--blue);
-      color: #fff;
-      box-shadow: 0 10px 26px -8px rgba(40, 116, 240, .55);
-      transition: .18s;
-    }
-
-    .btn:hover:not(:disabled) {
-      background: var(--blue-deep);
-      transform: translateY(-1px);
-    }
-
-    .btn:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .btn.dl {
-      background: var(--mint);
-      box-shadow: 0 10px 26px -8px rgba(31, 182, 115, .55);
-    }
-
-    .btn.dl:hover {
-      background: #178F5B;
-    }
-
-    /* progress */
-    .prog {
-      display: none;
-      margin-top: 20px;
-    }
-
-    .prog.show {
-      display: block;
-    }
-
-    .prog-bar {
-      height: 6px;
-      border-radius: 4px;
-      background: #E6EDF9;
-      overflow: hidden;
-    }
-
-    .prog-bar i {
-      display: block;
-      height: 100%;
-      width: 38%;
-      border-radius: 4px;
-      background: linear-gradient(90deg, var(--blue), var(--sun), var(--blue));
-      background-size: 200% 100%;
-      animation: slide 1.3s linear infinite;
-    }
-
-    @keyframes slide {
-      0% {
-        transform: translateX(-110%);
-      }
-
-      100% {
-        transform: translateX(290%);
-      }
-    }
-
-    .prog p {
-      margin-top: 10px;
-      font-size: 13.5px;
-      color: var(--mut);
-    }
-
-    .err {
-      display: none;
-      margin-top: 18px;
-      padding: 13px 16px;
-      border-radius: 10px;
-      background: #FDEDED;
-      color: var(--red);
-      font-size: 13.5px;
-      line-height: 1.55;
-    }
-
-    .err.show {
-      display: block;
-    }
-
-    /* result */
-    .result {
-      display: none;
-      margin-top: 24px;
-      border-top: 1px solid var(--line);
-      padding-top: 24px;
-    }
-
-    .result.show {
-      display: block;
-    }
-
-    .big {
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      font-size: 46px;
-      letter-spacing: -.02em;
-      line-height: 1;
-    }
-
-    .big small {
-      font-size: 15px;
-      color: var(--mut);
-      font-family: 'Inter', sans-serif;
-      font-weight: 500;
-      margin-left: 8px;
-    }
-
-    .split {
-      display: flex;
-      gap: 12px;
-      margin-top: 16px;
-      flex-wrap: wrap;
-    }
-
-    .chip {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 14px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .chip.ai {
-      background: #EDF3FF;
-      color: var(--blue-deep);
-    }
-
-    .chip.fx {
-      background: #FFF7DE;
-      color: #8A6D00;
-    }
-
-    .chip.pr {
-      background: #E9F9F1;
-      color: #0E7A4C;
-    }
-
-    .model {
-      margin-top: 14px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11.5px;
-      color: var(--mut);
-    }
-
-    details {
-      margin-top: 16px;
-    }
-
-    summary {
-      cursor: pointer;
-      font-size: 13.5px;
-      font-weight: 600;
-      color: var(--blue-deep);
-    }
-
-    .rep {
-      margin-top: 10px;
-      font-size: 13px;
-      line-height: 1.7;
-      color: #37476B;
-    }
-
-    .rep b {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-    }
-
-    footer {
-      text-align: center;
-      padding: 30px;
-      font-size: 12.5px;
-      color: var(--mut);
-    }
-
-    @media (max-width: 620px) {
-      .step {
-        grid-template-columns: 1fr;
-      }
-
-      .rail {
-        display: none;
-      }
-
-      .pipe {
-        max-width: 100%;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-
-      *,
-      *::before,
-      *::after {
-        animation: none !important;
-        transition: none !important;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flipkart AI Filler — Kiddieka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #0A1E44;
+    --bg: #F4F7FC;
+    --card: #FFFFFF;
+    --blue: #2874F0;
+    --blue-deep: #0B4CC4;
+    --sun: #FFC200;
+    --mint: #1FB673;
+    --red: #D64545;
+    --line: #DFE7F3;
+    --mut: #64748F;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+
+  /* ───────── HERO ───────── */
+  .hero {
+    background: var(--ink);
+    color: #fff;
+    padding: 64px 24px 96px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {   /* soft glow */
+    content: ''; position: absolute; width: 640px; height: 640px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(40,116,240,.35), transparent 65%);
+    top: -320px; right: -160px; pointer-events: none;
+  }
+  .hero-in { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: .22em;
+    color: var(--sun); text-transform: uppercase; margin-bottom: 18px;
+  }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+    font-size: clamp(34px, 5.4vw, 56px); line-height: 1.06; letter-spacing: -.02em;
+    max-width: 640px;
+  }
+  h1 em { font-style: normal; color: var(--sun); }
+  .sub { margin-top: 18px; font-size: 16px; color: #B9C6E2; max-width: 520px; line-height: 1.65; }
+
+  /* pipeline — the signature */
+  .pipe { display: flex; align-items: center; gap: 0; margin-top: 44px; max-width: 560px; }
+  .pipe-node { display: flex; flex-direction: column; align-items: center; gap: 9px; min-width: 86px; }
+  .pipe-dot {
+    width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+    font-size: 22px; transition: .3s;
+  }
+  .pipe-node.on .pipe-dot { background: var(--blue); border-color: var(--blue); box-shadow: 0 8px 28px rgba(40,116,240,.45); }
+  .pipe-node.done .pipe-dot { background: var(--mint); border-color: var(--mint); }
+  .pipe-node span { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; color: #8FA3CB; text-transform: uppercase; }
+  .pipe-node.on span, .pipe-node.done span { color: #fff; }
+  .pipe-link { flex: 1; height: 2px; background: rgba(255,255,255,.13); position: relative; overflow: hidden; }
+  .pipe-link i {
+    position: absolute; top: -2px; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--sun); opacity: 0; box-shadow: 0 0 10px var(--sun);
+  }
+
+  /* ───────── LAYOUT & RAIL ───────── */
+  .wrap { max-width: 880px; margin: -44px auto 90px; padding: 0 24px; position: relative; z-index: 2; }
+  .step { display: grid; grid-template-columns: 56px 1fr; gap: 0 20px; }
+  .rail { display: flex; flex-direction: column; align-items: center; }
+  .rail-n {
+    width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--card); border: 2px solid var(--line);
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: var(--mut);
+    flex-shrink: 0; transition: .35s;
+  }
+  .step.active .rail-n { border-color: var(--blue); color: var(--blue); }
+  .step.done .rail-n { background: var(--mint); border-color: var(--mint); color: #fff; }
+  .rail-line { width: 2px; flex: 1; background: var(--line); margin: 6px 0; position: relative; }
+  .rail-line i { position: absolute; inset: 0 0 auto; height: 0; background: var(--mint); width: 100%; transition: height .8s ease; }
+  .step.done .rail-line i { height: 100%; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 28px; margin-bottom: 26px;
+    box-shadow: 0 1px 2px rgba(10,30,68,.04), 0 12px 34px -18px rgba(10,30,68,.12);
+  }
+  .card h2 { font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+  .card .hint { font-size: 13.5px; color: var(--mut); margin-top: 5px; line-height: 1.6; }
+
+  /* dropzone */
+  .drop {
+    margin-top: 20px; border: 2px dashed #C4D3EE; border-radius: 14px;
+    padding: 46px 24px; text-align: center; cursor: pointer; transition: .25s;
+    background: #FAFCFF;
+  }
+  .drop:hover, .drop.over { border-color: var(--blue); background: #EFF5FF; }
+  .drop input { display: none; }
+  .drop .dino { font-size: 34px; display: inline-block; }
+  .drop p { margin-top: 10px; font-size: 14.5px; color: #4A5C82; font-weight: 500; }
+  .drop small { display: block; margin-top: 5px; font-size: 12px; color: var(--mut); }
+  .drop.busy { pointer-events: none; border-style: solid; border-color: var(--blue); background: #F3F8FF; }
+
+  /* upload loader */
+  .loader { display: none; }
+  .drop.busy .loader { display: block; }
+  .drop.busy .idle { display: none; }
+  .ring {
+    width: 54px; height: 54px; margin: 0 auto; border-radius: 50%;
+    border: 4px solid #D9E6FC; border-top-color: var(--blue);
+    animation: spin 0.9s linear infinite; position: relative;
+  }
+  .ring::after {   /* little dino riding the ring */
+    content: '🦕'; position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 22px; animation: unspin 0.9s linear infinite;
+  }
+  @keyframes spin  { to { transform: rotate(360deg); } }
+  @keyframes unspin{ to { transform: rotate(-360deg); } }
+  .loader p { margin-top: 14px; font-size: 14px; font-weight: 600; color: var(--blue-deep); }
+  .loader small { display: block; margin-top: 5px; font-size: 12px; color: var(--mut); }
+  .ldots::after { content: ''; animation: dots 1.4s steps(4, end) infinite; }
+  @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+
+  /* products */
+  .prod {
+    display: flex; align-items: center; gap: 14px; padding: 14px 0;
+    border-bottom: 1px solid #EEF3FB;
+  }
+  .prod:last-child { border-bottom: none; }
+  .prod .sku {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500;
+    background: var(--ink); color: #fff; padding: 5px 11px; border-radius: 8px; white-space: nowrap;
+  }
+  .prod .nm { font-weight: 600; font-size: 14.5px; }
+  .prod .mt { font-size: 12.5px; color: var(--mut); margin-top: 2px; }
+  .prod .cnt { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--blue); white-space: nowrap; }
+
+  /* form */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-top: 20px; }
+  label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--mut); margin-bottom: 6px; }
+  input[type=text], input[type=number] {
+    width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px;
+    font-size: 14.5px; font-family: 'Inter', sans-serif; outline: none; transition: .2s; background: #fff; color: var(--ink);
+  }
+  input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(40,116,240,.12); }
+  .check { display: flex; align-items: center; gap: 10px; font-size: 14px; margin-top: 18px; }
+  .check input { width: 17px; height: 17px; accent-color: var(--blue); }
+
+  .btn {
+    width: 100%; margin-top: 22px; padding: 15px; border: none; border-radius: 12px;
+    font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .01em;
+    cursor: pointer; background: var(--blue); color: #fff;
+    box-shadow: 0 10px 26px -8px rgba(40,116,240,.55); transition: .18s;
+  }
+  .btn:hover:not(:disabled) { background: var(--blue-deep); transform: translateY(-1px); }
+  .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+  .btn.dl { background: var(--mint); box-shadow: 0 10px 26px -8px rgba(31,182,115,.55); }
+  .btn.dl:hover { background: #178F5B; }
+
+  /* progress */
+  .prog { display: none; margin-top: 20px; }
+  .prog.show { display: block; }
+  .prog-bar { height: 6px; border-radius: 4px; background: #E6EDF9; overflow: hidden; }
+  .prog-bar i {
+    display: block; height: 100%; width: 38%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--blue), var(--sun), var(--blue));
+    background-size: 200% 100%; animation: slide 1.3s linear infinite;
+  }
+  @keyframes slide { 0% { transform: translateX(-110%);} 100% { transform: translateX(290%);} }
+  .prog p { margin-top: 10px; font-size: 13.5px; color: var(--mut); }
+
+  .err {
+    display: none; margin-top: 18px; padding: 13px 16px; border-radius: 10px;
+    background: #FDEDED; color: var(--red); font-size: 13.5px; line-height: 1.55;
+  }
+  .err.show { display: block; }
+
+  /* result */
+  .result { display: none; margin-top: 24px; border-top: 1px solid var(--line); padding-top: 24px; }
+  .result.show { display: block; }
+  .big {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 46px; letter-spacing: -.02em;
+    line-height: 1;
+  }
+  .big small { font-size: 15px; color: var(--mut); font-family: 'Inter', sans-serif; font-weight: 500; margin-left: 8px; }
+  .split { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+  .chip {
+    display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+  }
+  .chip.ai { background: #EDF3FF; color: var(--blue-deep); }
+  .chip.fx { background: #FFF7DE; color: #8A6D00; }
+  .chip.pr { background: #E9F9F1; color: #0E7A4C; }
+  .model {
+    margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--mut);
+  }
+  details { margin-top: 16px; }
+  summary { cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--blue-deep); }
+  .rep { margin-top: 10px; font-size: 13px; line-height: 1.7; color: #37476B; }
+  .rep b { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  footer { text-align: center; padding: 30px; font-size: 12.5px; color: var(--mut); }
+
+  @media (max-width: 620px) {
+    .step { grid-template-columns: 1fr; }
+    .rail { display: none; }
+    .pipe { max-width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
 </head>
-
 <body>
 
-  <header class="hero">
-    <div class="hero-in">
-      <p class="eyebrow" data-an>Kiddieka · Seller Tools</p>
-      <h1 data-an>Bulk listings,<br>filled by <em>AI</em>.</h1>
-      <p class="sub" data-an>Upload the Flipkart bulk template, review your products, and download the same file back —
-        every empty field completed. Nothing in the sheet's structure is touched.</p>
+<header class="hero">
+  <div class="hero-in">
+    <p class="eyebrow" data-an>Kiddieka · Seller Tools</p>
+    <h1 data-an>Bulk listings,<br>filled by <em>AI</em>.</h1>
+    <p class="sub" data-an>Upload the Flipkart bulk template, review your products, and download the same file back — every empty field completed. Nothing in the sheet's structure is touched.</p>
 
-      <div class="pipe" data-an>
-        <div class="pipe-node" id="pn1">
-          <div class="pipe-dot">📄</div><span>Upload</span>
-        </div>
-        <div class="pipe-link"><i></i><i></i><i></i></div>
-        <div class="pipe-node" id="pn2">
-          <div class="pipe-dot">✨</div><span>AI fill</span>
-        </div>
-        <div class="pipe-link"><i></i><i></i><i></i></div>
-        <div class="pipe-node" id="pn3">
-          <div class="pipe-dot">⬇️</div><span>Download</span>
-        </div>
-      </div>
+    <div class="pipe" data-an>
+      <div class="pipe-node" id="pn1"><div class="pipe-dot">📄</div><span>Upload</span></div>
+      <div class="pipe-link"><i></i><i></i><i></i></div>
+      <div class="pipe-node" id="pn2"><div class="pipe-dot">✨</div><span>AI fill</span></div>
+      <div class="pipe-link"><i></i><i></i><i></i></div>
+      <div class="pipe-node" id="pn3"><div class="pipe-dot">⬇️</div><span>Download</span></div>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main class="wrap">
+<main class="wrap">
 
-    <div class="step active" id="st1">
-      <div class="rail">
-        <div class="rail-n">1</div>
-        <div class="rail-line"><i></i></div>
-      </div>
-      <section class="card" data-card>
-        <h2>Upload your Flipkart template</h2>
-        <p class="hint">The .xls you download from Seller Hub after image approval. All 16 sheets stay exactly as they
-          are.</p>
-        <div class="drop" id="drop">
-          <input type="file" id="file" accept=".xls,.xlsx,.xlsm">
+  <div class="step active" id="st1">
+    <div class="rail"><div class="rail-n">1</div><div class="rail-line"><i></i></div></div>
+    <section class="card" data-card>
+      <h2>Upload your Flipkart template</h2>
+      <p class="hint">The .xls you download from Seller Hub after image approval. All 16 sheets stay exactly as they are.</p>
+      <div class="drop" id="drop">
+        <input type="file" id="file" accept=".xls,.xlsx,.xlsm">
+        <div class="idle">
           <span class="dino" id="dino">🦕</span>
           <p>Click or drop the sheet here</p>
           <small>.xls · .xlsx — up to 20 MB</small>
         </div>
-        <div class="err" id="e1"></div>
-      </section>
-    </div>
-
-    <div class="step" id="st2" style="display:none">
-      <div class="rail">
-        <div class="rail-n">2</div>
-        <div class="rail-line"><i></i></div>
+        <div class="loader">
+          <div class="ring"></div>
+          <p><span id="ltext">Uploading your sheet</span><span class="ldots"></span></p>
+          <small id="lfile"></small>
+        </div>
       </div>
-      <section class="card" data-card>
-        <h2>Products in your sheet</h2>
-        <p class="hint" id="sheetinfo"></p>
-        <div id="plist"></div>
-      </section>
-    </div>
+      <div class="err" id="e1"></div>
+    </section>
+  </div>
 
-    <div class="step" id="st3" style="display:none">
-      <div class="rail">
-        <div class="rail-n">3</div>
-        <div class="rail-line"><i></i></div>
+  <div class="step" id="st2" style="display:none">
+    <div class="rail"><div class="rail-n">2</div><div class="rail-line"><i></i></div></div>
+    <section class="card" data-card>
+      <h2>Products in your sheet</h2>
+      <p class="hint" id="sheetinfo"></p>
+      <div id="plist"></div>
+    </section>
+  </div>
+
+  <div class="step" id="st3" style="display:none">
+    <div class="rail"><div class="rail-n">3</div><div class="rail-line"><i></i></div></div>
+    <section class="card" data-card>
+      <h2>Pricing &amp; brand</h2>
+      <p class="hint">These go into every row. Everything else is written by AI or fixed Flipkart rules.</p>
+      <div class="grid">
+        <div><label>MRP (₹)</label><input type="number" id="mrp" value="599"></div>
+        <div><label>Selling price (₹)</label><input type="number" id="price" value="299"></div>
+        <div><label>Stock</label><input type="number" id="stock" value="100"></div>
+        <div><label>HSN</label><input type="text" id="hsn" value="6111"></div>
       </div>
-      <section class="card" data-card>
-        <h2>Pricing &amp; brand</h2>
-        <p class="hint">These go into every row. Everything else is written by AI or fixed Flipkart rules.</p>
-        <div class="grid">
-          <div><label>MRP (₹)</label><input type="number" id="mrp" value="599"></div>
-          <div><label>Selling price (₹)</label><input type="number" id="price" value="299"></div>
-          <div><label>Stock</label><input type="number" id="stock" value="100"></div>
-          <div><label>HSN</label><input type="text" id="hsn" value="6111"></div>
+      <div class="grid">
+        <div><label>Brand</label><input type="text" id="brand" value="KiddieKa"></div>
+        <div><label>Manufacturer / packer</label><input type="text" id="manu" value="KiddieKa, India"></div>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="parent" checked>
+        <span>Also fill <b>Parent Variant Products</b> (main size per product)</span>
+      </div>
+
+      <button class="btn" id="fillBtn">Fill the sheet with AI</button>
+
+      <div class="prog" id="prog">
+        <div class="prog-bar"><i></i></div>
+        <p id="progtext">Generating listing content…</p>
+      </div>
+      <div class="err" id="e3"></div>
+
+      <div class="result" id="result">
+        <div class="big"><span id="count">0</span><small>cells filled</small></div>
+        <div class="split">
+          <div class="chip ai">🤖 AI wrote <span id="aic" style="margin-left:4px"></span> cells</div>
+          <div class="chip fx">⚡ <span id="fxc"></span> filled instantly by rules</div>
+          <div class="chip pr" id="prchip" style="display:none">👨‍👩‍👧 <span id="prc"></span> parent rows</div>
         </div>
-        <div class="grid">
-          <div><label>Brand</label><input type="text" id="brand" value="KiddieKa"></div>
-          <div><label>Manufacturer / packer</label><input type="text" id="manu" value="KiddieKa, India"></div>
-        </div>
-        <div class="check">
-          <input type="checkbox" id="parent" checked>
-          <span>Also fill <b>Parent Variant Products</b> (main size per product)</span>
-        </div>
+        <p class="model" id="model"></p>
+        <details id="repwrap">
+          <summary>What exactly did the AI write?</summary>
+          <div class="rep" id="rep"></div>
+        </details>
+        <button class="btn dl" id="dlBtn">Download filled sheet</button>
+      </div>
+    </section>
+  </div>
 
-        <button class="btn" id="fillBtn">Fill the sheet with AI</button>
+</main>
 
-        <div class="prog" id="prog">
-          <div class="prog-bar"><i></i></div>
-          <p id="progtext">Generating listing content…</p>
-        </div>
-        <div class="err" id="e3"></div>
+<footer>Built for Kiddieka · The sheet is edited in place — structure, images and validations untouched.</footer>
 
-        <div class="result" id="result">
-          <div class="big"><span id="count">0</span><small>cells filled</small></div>
-          <div class="split">
-            <div class="chip ai">🤖 AI wrote <span id="aic" style="margin-left:4px"></span> cells</div>
-            <div class="chip fx">⚡ <span id="fxc"></span> filled instantly by rules</div>
-            <div class="chip pr" id="prchip" style="display:none">👨‍👩‍👧 <span id="prc"></span> parent rows</div>
-          </div>
-          <p class="model" id="model"></p>
-          <details id="repwrap">
-            <summary>What exactly did the AI write?</summary>
-            <div class="rep" id="rep"></div>
-          </details>
-          <button class="btn dl" id="dlBtn">Download filled sheet</button>
-        </div>
-      </section>
-    </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let jobId = null, dlUrl = null, pipeTl = null;
 
-  </main>
+/* ── entrance animation ── */
+if (!reduced && window.gsap) {
+  gsap.set('[data-an]', { y: 26, opacity: 0 });
+  gsap.set('[data-card]', { y: 30, opacity: 0 });
+  gsap.timeline()
+    .to('[data-an]', { y: 0, opacity: 1, duration: .7, stagger: .12, ease: 'power3.out', delay: .1 })
+    .to('[data-card]', { y: 0, opacity: 1, duration: .6, stagger: .12, ease: 'power3.out' }, '-=.4');
+}
 
-  <footer>Built for Kiddieka · The sheet is edited in place — structure, images and validations untouched.</footer>
+/* ── pipeline dot stream (runs while AI works) ── */
+function pipeFlow(on) {
+  if (reduced || !window.gsap) return;
+  if (pipeTl) { pipeTl.kill(); pipeTl = null; gsap.set('.pipe-link i', { opacity: 0 }); }
+  if (!on) return;
+  pipeTl = gsap.timeline({ repeat: -1 });
+  document.querySelectorAll('.pipe-link').forEach((link, li) => {
+    link.querySelectorAll('i').forEach((dot, di) => {
+      pipeTl.fromTo(dot, { left: '-4%', opacity: 0 },
+        { left: '102%', opacity: 1, duration: 1.1, ease: 'none' }, li * .35 + di * .38);
+    });
+  });
+}
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script>
-    const $ = id => document.getElementById(id);
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let jobId = null, dlUrl = null, pipeTl = null;
+function setPipe(stage) {  // 1 uploading done, 2 ai, 3 done
+  ['pn1','pn2','pn3'].forEach((id, i) => {
+    const n = $(id);
+    n.classList.toggle('done', i + 1 < stage || stage === 4);
+    n.classList.toggle('on', i + 1 === stage && stage !== 4);
+  });
+}
 
-    /* ── entrance animation ── */
-    if (!reduced && window.gsap) {
-      gsap.set('[data-an]', { y: 26, opacity: 0 });
-      gsap.set('[data-card]', { y: 30, opacity: 0 });
-      gsap.timeline()
-        .to('[data-an]', { y: 0, opacity: 1, duration: .7, stagger: .12, ease: 'power3.out', delay: .1 })
-        .to('[data-card]', { y: 0, opacity: 1, duration: .6, stagger: .12, ease: 'power3.out' }, '-=.4');
-    }
+/* ── upload ── */
+$('drop').addEventListener('click', () => $('file').click());
+['dragover','dragenter'].forEach(ev => $('drop').addEventListener(ev, e => {
+  e.preventDefault(); $('drop').classList.add('over');
+  if (!reduced && window.gsap) gsap.to('#dino', { y: -8, duration: .18, yoyo: true, repeat: 1 });
+}));
+$('drop').addEventListener('dragleave', () => $('drop').classList.remove('over'));
+$('drop').addEventListener('drop', e => { e.preventDefault(); $('drop').classList.remove('over'); if (e.dataTransfer.files[0]) upload(e.dataTransfer.files[0]); });
+$('file').addEventListener('change', () => { if ($('file').files[0]) upload($('file').files[0]); });
 
-    /* ── pipeline dot stream (runs while AI works) ── */
-    function pipeFlow(on) {
-      if (reduced || !window.gsap) return;
-      if (pipeTl) { pipeTl.kill(); pipeTl = null; gsap.set('.pipe-link i', { opacity: 0 }); }
-      if (!on) return;
-      pipeTl = gsap.timeline({ repeat: -1 });
-      document.querySelectorAll('.pipe-link').forEach((link, li) => {
-        link.querySelectorAll('i').forEach((dot, di) => {
-          pipeTl.fromTo(dot, { left: '-4%', opacity: 0 },
-            { left: '102%', opacity: 1, duration: 1.1, ease: 'none' }, li * .35 + di * .38);
-        });
-      });
-    }
+const UP_MSGS = [
+  'Uploading your sheet',
+  'Opening the workbook on the server',
+  'Reading all sheets and columns',
+  'Detecting your products and sizes',
+  'Collecting allowed dropdown values',
+];
+let upTimer = null;
 
-    function setPipe(stage) {  // 1 uploading done, 2 ai, 3 done
-      ['pn1', 'pn2', 'pn3'].forEach((id, i) => {
-        const n = $(id);
-        n.classList.toggle('done', i + 1 < stage || stage === 4);
-        n.classList.toggle('on', i + 1 === stage && stage !== 4);
-      });
-    }
-
-    /* ── upload ── */
-    $('drop').addEventListener('click', () => $('file').click());
-    ['dragover', 'dragenter'].forEach(ev => $('drop').addEventListener(ev, e => {
-      e.preventDefault(); $('drop').classList.add('over');
-      if (!reduced && window.gsap) gsap.to('#dino', { y: -8, duration: .18, yoyo: true, repeat: 1 });
-    }));
-    $('drop').addEventListener('dragleave', () => $('drop').classList.remove('over'));
-    $('drop').addEventListener('drop', e => { e.preventDefault(); $('drop').classList.remove('over'); if (e.dataTransfer.files[0]) upload(e.dataTransfer.files[0]); });
-    $('file').addEventListener('change', () => { if ($('file').files[0]) upload($('file').files[0]); });
-
-    async function upload(file) {
-      $('e1').classList.remove('show');
-      setPipe(1); pipeFlow(true);
-      if (!reduced && window.gsap) gsap.to('#dino', { rotate: 360, duration: .8, ease: 'power2.inOut' });
-      const fd = new FormData(); fd.append('file', file);
-      try {
-        const r = await fetch('/api/upload', { method: 'POST', body: fd });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.detail || 'Upload failed');
-        jobId = j.job_id;
-        pipeFlow(false); setPipe(2);
-        $('st1').classList.add('done'); $('st1').classList.remove('active');
-        $('st2').style.display = ''; $('st3').style.display = '';
-        $('st2').classList.add('active');
-        $('sheetinfo').textContent = `Sheet "${j.sheet}" — ${j.total_rows} listings across ${j.products.length} product${j.products.length > 1 ? 's' : ''}.`;
-        $('plist').innerHTML = j.products.map(p => `
+async function upload(file) {
+  $('e1').classList.remove('show');
+  setPipe(1); pipeFlow(true);
+  /* show loader */
+  $('drop').classList.add('busy');
+  $('lfile').textContent = file.name;
+  let ui = 0;
+  $('ltext').textContent = UP_MSGS[0];
+  upTimer = setInterval(() => { ui = (ui + 1) % UP_MSGS.length; $('ltext').textContent = UP_MSGS[ui]; }, 4000);
+  const fd = new FormData(); fd.append('file', file);
+  try {
+    const r = await fetch('/api/upload', { method: 'POST', body: fd });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || 'Upload failed');
+    jobId = j.job_id;
+    pipeFlow(false); setPipe(2);
+    $('st1').classList.add('done'); $('st1').classList.remove('active');
+    $('st2').style.display = ''; $('st3').style.display = '';
+    $('st2').classList.add('active');
+    $('sheetinfo').textContent = `Sheet "${j.sheet}" — ${j.total_rows} listings across ${j.products.length} product${j.products.length > 1 ? 's' : ''}.`;
+    $('plist').innerHTML = j.products.map(p => `
       <div class="prod">
         <span class="sku">${p.group}</span>
         <div>
@@ -801,89 +402,89 @@
         </div>
         <span class="cnt">${p.missing_count} empty</span>
       </div>`).join('');
-        if (!j.has_parent_sheet) { $('parent').checked = false; $('parent').disabled = true; }
-        if (!reduced && window.gsap) {
-          gsap.from('#st2 .prod', { x: -18, opacity: 0, duration: .45, stagger: .08, ease: 'power2.out' });
-          gsap.from('#st3 .card', { y: 24, opacity: 0, duration: .5, ease: 'power2.out' });
-        }
-        $('st3').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
-      } catch (e) {
-        pipeFlow(false); setPipe(0);
-        $('e1').textContent = e.message; $('e1').classList.add('show');
-      }
+    if (!j.has_parent_sheet) { $('parent').checked = false; $('parent').disabled = true; }
+    if (!reduced && window.gsap) {
+      gsap.from('#st2 .prod', { x: -18, opacity: 0, duration: .45, stagger: .08, ease: 'power2.out' });
+      gsap.from('#st3 .card', { y: 24, opacity: 0, duration: .5, ease: 'power2.out' });
     }
+    $('st3').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+  } catch (e) {
+    pipeFlow(false); setPipe(0);
+    $('e1').textContent = e.message; $('e1').classList.add('show');
+  } finally {
+    clearInterval(upTimer);
+    $('drop').classList.remove('busy');
+  }
+}
 
-    /* ── fill ── */
-    const PROG_MSGS = [
-      'Reading allowed values from your sheet…',
-      'AI is writing descriptions and picking dropdown values…',
-      'Applying fixed Flipkart rules (status, GST, HSN, dimensions)…',
-      'Writing cells into the original .xls with LibreOffice…',
-      'Almost there — saving your file…',
-    ];
-    let progTimer = null;
+/* ── fill ── */
+const PROG_MSGS = [
+  'Reading allowed values from your sheet…',
+  'AI is writing descriptions and picking dropdown values…',
+  'Applying fixed Flipkart rules (status, GST, HSN, dimensions)…',
+  'Writing cells into the original .xls with LibreOffice…',
+  'Almost there — saving your file…',
+];
+let progTimer = null;
 
-    $('fillBtn').addEventListener('click', async () => {
-      if (!jobId) return;
-      $('fillBtn').disabled = true;
-      $('e3').classList.remove('show'); $('result').classList.remove('show');
-      $('prog').classList.add('show');
-      setPipe(2); pipeFlow(true);
-      let mi = 0;
-      $('progtext').textContent = PROG_MSGS[0];
-      progTimer = setInterval(() => { mi = (mi + 1) % PROG_MSGS.length; $('progtext').textContent = PROG_MSGS[mi]; }, 6000);
+$('fillBtn').addEventListener('click', async () => {
+  if (!jobId) return;
+  $('fillBtn').disabled = true;
+  $('e3').classList.remove('show'); $('result').classList.remove('show');
+  $('prog').classList.add('show');
+  setPipe(2); pipeFlow(true);
+  let mi = 0;
+  $('progtext').textContent = PROG_MSGS[0];
+  progTimer = setInterval(() => { mi = (mi + 1) % PROG_MSGS.length; $('progtext').textContent = PROG_MSGS[mi]; }, 6000);
 
-      try {
-        const r = await fetch('/api/fill', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            job_id: jobId,
-            mrp: +$('mrp').value, price: +$('price').value, stock: +$('stock').value,
-            brand: $('brand').value, manufacturer: $('manu').value, hsn: $('hsn').value,
-            fill_parent: $('parent').checked,
-          }),
-        });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.detail || 'Fill failed');
-
-        dlUrl = j.download;
-        $('aic').textContent = j.ai_cells;
-        $('fxc').textContent = j.fixed_cells;
-        if (j.parent_rows) { $('prc').textContent = j.parent_rows; $('prchip').style.display = ''; }
-        $('model').textContent = 'model: ' + (j.model || 'openrouter') + ' · one AI call per product';
-        $('rep').innerHTML = Object.entries(j.ai_report || {}).map(([g, fields]) =>
-          `<div><b>${g}</b> → ${fields.join(', ')}</div>`).join('') || 'No AI fields were needed — everything was rule-based.';
-        $('result').classList.add('show');
-
-        /* count-up */
-        if (!reduced && window.gsap) {
-          const o = { v: 0 };
-          gsap.to(o, {
-            v: j.cells_filled, duration: 1.4, ease: 'power2.out',
-            onUpdate: () => $('count').textContent = Math.round(o.v).toLocaleString()
-          });
-          gsap.from('#result .chip', { y: 14, opacity: 0, duration: .4, stagger: .1, delay: .4 });
-        } else {
-          $('count').textContent = j.cells_filled.toLocaleString();
-        }
-        setPipe(4); pipeFlow(false);
-        $('st2').classList.add('done'); $('st3').classList.add('done');
-        if (j.ai_errors && j.ai_errors.length) {
-          $('e3').textContent = '⚠️ Some products used fallback values: ' + j.ai_errors.join('; ');
-          $('e3').classList.add('show');
-        }
-      } catch (e) {
-        setPipe(2); pipeFlow(false);
-        $('e3').textContent = e.message; $('e3').classList.add('show');
-      } finally {
-        clearInterval(progTimer);
-        $('prog').classList.remove('show');
-        $('fillBtn').disabled = false;
-      }
+  try {
+    const r = await fetch('/api/fill', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        job_id: jobId,
+        mrp: +$('mrp').value, price: +$('price').value, stock: +$('stock').value,
+        brand: $('brand').value, manufacturer: $('manu').value, hsn: $('hsn').value,
+        fill_parent: $('parent').checked,
+      }),
     });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || 'Fill failed');
 
-    $('dlBtn').addEventListener('click', () => { if (dlUrl) window.location = dlUrl; });
-  </script>
+    dlUrl = j.download;
+    $('aic').textContent = j.ai_cells;
+    $('fxc').textContent = j.fixed_cells;
+    if (j.parent_rows) { $('prc').textContent = j.parent_rows; $('prchip').style.display = ''; }
+    $('model').textContent = 'model: ' + (j.model || 'openrouter') + ' · one AI call per product';
+    $('rep').innerHTML = Object.entries(j.ai_report || {}).map(([g, fields]) =>
+      `<div><b>${g}</b> → ${fields.join(', ')}</div>`).join('') || 'No AI fields were needed — everything was rule-based.';
+    $('result').classList.add('show');
+
+    /* count-up */
+    if (!reduced && window.gsap) {
+      const o = { v: 0 };
+      gsap.to(o, { v: j.cells_filled, duration: 1.4, ease: 'power2.out',
+        onUpdate: () => $('count').textContent = Math.round(o.v).toLocaleString() });
+      gsap.from('#result .chip', { y: 14, opacity: 0, duration: .4, stagger: .1, delay: .4 });
+    } else {
+      $('count').textContent = j.cells_filled.toLocaleString();
+    }
+    setPipe(4); pipeFlow(false);
+    $('st2').classList.add('done'); $('st3').classList.add('done');
+    if (j.ai_errors && j.ai_errors.length) {
+      $('e3').textContent = '⚠️ Some products used fallback values: ' + j.ai_errors.join('; ');
+      $('e3').classList.add('show');
+    }
+  } catch (e) {
+    setPipe(2); pipeFlow(false);
+    $('e3').textContent = e.message; $('e3').classList.add('show');
+  } finally {
+    clearInterval(progTimer);
+    $('prog').classList.remove('show');
+    $('fillBtn').disabled = false;
+  }
+});
+
+$('dlBtn').addEventListener('click', () => { if (dlUrl) window.location = dlUrl; });
+</script>
 </body>
-
 </html>
