@@ -72,8 +72,18 @@ def _chat(payload: dict, api_key: str) -> str:
         json=payload,
         timeout=150,
     )
-    resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]["content"]
+    try:
+        body = resp.json()
+    except ValueError:
+        raise RuntimeError(f"API returned non-JSON (HTTP {resp.status_code})")
+    # OpenRouter can return an error object even with HTTP 200
+    if "error" in body:
+        err = body["error"]
+        msg = err.get("message", str(err)) if isinstance(err, dict) else str(err)
+        raise RuntimeError(f"OpenRouter: {msg[:220]}")
+    if not body.get("choices"):
+        raise RuntimeError(f"OpenRouter returned no answer (HTTP {resp.status_code})")
+    return body["choices"][0]["message"]["content"] or ""
 
 
 def analyze_product(image_data_url: str, title: str, brand: str, api_key: str) -> dict:
@@ -95,19 +105,25 @@ def analyze_product(image_data_url: str, title: str, brand: str, api_key: str) -
         ' "notable_details": ["short phrases of anything special you can see"]}\n'
         "No markdown, no explanation — JSON only."
     )
-    raw = _chat({
-        "model": VISION_MODEL,
-        "messages": [{
-            "role": "user",
-            "content": [
-                {"type": "text", "text": vision_prompt},
-                {"type": "image_url", "image_url": {"url": image_data_url}},
-            ],
-        }],
-        "temperature": 0.15,
-        "max_tokens": 900,
-    }, api_key)
-    product = _clean(raw)
+    vision_error = None
+    try:
+        raw = _chat({
+            "model": VISION_MODEL,
+            "messages": [{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": vision_prompt},
+                    {"type": "image_url", "image_url": {"url": image_data_url}},
+                ],
+            }],
+            "temperature": 0.15,
+            "max_tokens": 900,
+        }, api_key)
+        product = _clean(raw)
+    except Exception as e:
+        # Vision failed (rate limit / model busy) — continue with title only
+        vision_error = str(e)[:200]
+        product = {"note": "photo analysis unavailable, SEO built from title only"}
 
     # ── Stage 2: SEO pack from the facts ────────────────────────────────────
     seo_prompt = (
@@ -138,6 +154,7 @@ def analyze_product(image_data_url: str, title: str, brand: str, api_key: str) -
     seo = _clean(seo_raw)
 
     return {"product": product, "seo": seo,
+            "vision_error": vision_error,
             "models": {"vision": VISION_MODEL, "text": MODEL}}
 
 

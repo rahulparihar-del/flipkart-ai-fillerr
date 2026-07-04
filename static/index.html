@@ -503,9 +503,20 @@ $('pafile').addEventListener('change', () => { if ($('pafile').files[0]) setPhot
 
 function setPhoto(f) {
   if (!f.type.startsWith('image/')) return;
-  paFile = f;
   const url = URL.createObjectURL(f);
   $('padrop').innerHTML = `<img src="${url}" alt="product">`;
+  // Downscale in the browser: max 1024px JPEG — faster upload, fits free AI limits
+  const img = new Image();
+  img.onload = () => {
+    const scale = Math.min(1, 1024 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * scale);
+    c.height = Math.round(img.height * scale);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    c.toBlob(b => { paFile = b || f; }, 'image/jpeg', 0.85);
+  };
+  img.onerror = () => { paFile = f; };
+  img.src = url;
 }
 
 $('paBtn').addEventListener('click', async () => {
@@ -518,7 +529,7 @@ $('paBtn').addEventListener('click', async () => {
   paTimer = setInterval(() => { pi = (pi + 1) % PA_MSGS.length; $('paprogtext').textContent = PA_MSGS[pi]; }, 5000);
 
   const fd = new FormData();
-  fd.append('photo', paFile);
+  fd.append('photo', paFile, 'product.jpg');
   fd.append('title', $('patitle').value);
   fd.append('brand', $('brand') ? $('brand').value : 'KiddieKa');
 
@@ -540,6 +551,10 @@ $('paBtn').addEventListener('click', async () => {
     $('kwhigh').innerHTML = (s.keywords_high || []).map(k => `<span class="kw high">${k}</span>`).join('');
     $('tips').innerHTML = (s.ranking_tips || []).map(t => `<p class="tip">${t}</p>`).join('');
     $('seodesc').textContent = s.description || '';
+    if (j.vision_error) {
+      $('pae').textContent = 'Photo could not be analyzed (' + j.vision_error + ') — SEO pack was built from your title instead.';
+      $('pae').classList.add('show');
+    }
     $('seoout').classList.add('show');
     $('st0').classList.add('done');
     if (window.lucide) lucide.createIcons();
